@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Chat</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#e5ddd5;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
+
+header{
+  background:#075E54;
+  color:white;
+  padding:15px;
+}
+
+select{
+  background:#075E54;
+  color:white;
+  border:none;
+  font-size:16px;
+}
+
+#chatBox{
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+}
+
+.message{
+  max-width:75%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:10px;
+  word-wrap:break-word;
+}
+
+.user{
+  background:#DCF8C6;
+  align-self:flex-end;
+}
+
+.bot{
+  background:white;
+  align-self:flex-start;
+}
+
+#inputArea{
+  display:flex;
+  padding:10px;
+  background:#f0f0f0;
+}
+
+#userInput{
+  flex:1;
+  padding:10px;
+  font-size:16px;
+  border-radius:20px;
+  border:1px solid #ccc;
+}
+
+button{
+  margin-left:5px;
+  padding:10px 15px;
+  border:none;
+  border-radius:20px;
+  background:#25D366;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:hover{
+  opacity:0.8;
+}
+
+/* Emoji Panel */
+
+#emojiPicker{
+  position:fixed;
+  bottom:-300px;
+  left:0;
+  width:100%;
+  height:260px;
+  background:#f2f2f2;
+  border-top:1px solid #ccc;
+  overflow-y:auto;
+  padding:15px;
+  box-shadow:0 -4px 15px rgba(0,0,0,0.2);
+  transition:bottom 0.3s ease;
+}
+
+#emojiPicker.active{
+  bottom:0;
+}
+
+.emoji-grid{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:10px;
+  font-size:24px;
+  text-align:center;
+}
+
+.emoji-grid span{
+  cursor:pointer;
+  transition:transform 0.1s ease;
+}
+
+.emoji-grid span:hover{
+  transform:scale(1.3);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<select id="roleSelect" onchange="loadChat()">
+<option value="mom">Mom 👩</option>
+<option value="freund">Freund 😎</option>
+</select>
+</header>
+
+<div id="chatBox"></div>
+
+<div id="inputArea">
+<input type="text" id="userInput" placeholder="Nachricht..."
+onkeydown="if(event.key==='Enter')sendMessage()">
+
+<button onclick="toggleEmojiPicker()">😊</button>
+<button onclick="sendMessage()">Senden</button>
+</div>
+
+<div id="emojiPicker">
+<div class="emoji-grid">
+<span>😀</span><span>😃</span><span>😄</span><span>😁</span>
+<span>😆</span><span>😅</span><span>😂</span><span>🤣</span>
+<span>😊</span><span>😍</span><span>🥰</span><span>😘</span>
+<span>😎</span><span>🤩</span><span>😭</span><span>😡</span>
+<span>😱</span><span>😴</span><span>🤔</span><span>🙄</span>
+<span>❤️</span><span>💛</span><span>💚</span><span>💙</span>
+<span>💜</span><span>🖤</span><span>💔</span><span>💕</span>
+<span>💖</span><span>👍</span><span>👏</span><span>🙌</span>
+<span>👌</span><span>🙏</span><span>🔥</span><span>✨</span>
+<span>🎉</span><span>🍕</span><span>🍔</span><span>🍫</span>
+</div>
+</div>
+
+<script>
+
+let chats={mom:[],freund:[]};
+let memory={mom:{},freund:{}};
+
+function random(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function sendMessage(){
+  let input=document.getElementById("userInput");
+  let msg=input.value.trim();
+  if(!msg) return;
+
+  let role=document.getElementById("roleSelect").value;
+
+  chats[role].push({sender:"user",text:msg});
+  addMessage(msg,"user");
+  input.value="";
+
+  setTimeout(()=>{
+    let reply=generateReply(role,msg);
+    chats[role].push({sender:"bot",text:reply});
+    addMessage(reply,"bot");
+  },600);
+}
+
+function generateReply(role,message){
+  let msg=message.toLowerCase();
+  let mem=memory[role];
+
+  if(role==="freund"){
+
+    if(msg.includes("hallo")||msg.includes("hi")){
+      mem.last="how";
+      return random([
+        "Yoo 😎 endlich schreibst du! Wie geht’s dir?",
+        "Hey 😁 was geht heute?",
+        "Na 😎 alles entspannt?"
+      ]);
+    }
+
+    if(mem.last==="how"){
+      mem.last=null;
+      if(msg.includes("gut")){
+        return random([
+          "Nice 😎 freut mich mega! Was lief gut?",
+          "Sehr stark 😁 erzähl mal mehr!",
+          "Geil 😎 so muss das!"
+        ]);
+      }else{
+        return random([
+          "Oh 😕 was ist los?",
+          "Nicht so gut? Wer nervt dich 😅",
+          "Erzähl mir alles 😎"
+        ]);
+      }
+    }
+
+    if(msg.length>30){
+      return random([
+        "Krass 😎 wie hast du dich dabei gefühlt?",
+        "Hmm spannend 😁 und was jetzt?",
+        "Das klingt schon heftig 😅"
+      ]);
+    }
+
+    if(msg.split(" ").length<=2){
+      return random([
+        "Haha 😎 bisschen mehr Details!",
+        "Ey 😅 das war kurz!",
+        "Okayyy 😎 und?"
+      ]);
+    }
+
+    return random([
+      "Interessant 😎 erzähl weiter!",
+      "Echt jetzt? 😁",
+      "Hmm okay 😎"
+    ]);
+  }
+
+  if(role==="mom"){
+    if(msg.includes("hallo")||msg.includes("hi")){
+      mem.last="how";
+      return "Hallo mein Schatz 💕 Wie geht es dir?";
+    }
+
+    if(mem.last==="how"){
+      mem.last=null;
+      if(msg.includes("gut")){
+        return "Das freut mich so sehr 💕";
+      }else{
+        return "Oh nein 😢 was ist los?";
+      }
+    }
+
+    return "Erzähl weiter mein Schatz 💕";
+  }
+}
+
+function addMessage(text,sender){
+  let chatBox=document.getElementById("chatBox");
+  let msg=document.createElement("div");
+  msg.classList.add("message",sender);
+  msg.textContent=text;
+  chatBox.appendChild(msg);
+  chatBox.scrollTop=chatBox.scrollHeight;
+}
+
+function loadChat(){
+  let role=document.getElementById("roleSelect").value;
+  let chatBox=document.getElementById("chatBox");
+  chatBox.innerHTML="";
+  chats[role].forEach(m=>addMessage(m.text,m.sender));
+}
+
+function toggleEmojiPicker(){
+  document.getElementById("emojiPicker").classList.toggle("active");
+}
+
+document.querySelectorAll(".emoji-grid span").forEach(el=>{
+  el.addEventListener("click",function(){
+    let input=document.getElementById("userInput");
+    input.value+=this.textContent;
+    input.focus();
+    document.getElementById("emojiPicker").classList.remove("active");
+  });
+});
+
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#emojiPicker") && 
+     !e.target.closest("button")){
+    document.getElementById("emojiPicker").classList.remove("active");
+  }
+});
+
+</script>
+
+</body>
+</html>
